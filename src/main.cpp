@@ -38,9 +38,9 @@ struct DataContainer{
                     this->headerValues[colNumb++] = value;
                 }else{
                     if(isNumber(value))
-                        row.push_back(value);
-                    else
                         row.push_back(std::stod(value));
+                    else
+                        row.push_back(value);
                 }
                 
             }
@@ -53,9 +53,19 @@ struct DataContainer{
             
             if(row.size() !=0){
                 // const auto& field : row
-                for (int i = 0;  i < row.size() ; i ++) {
-                    std::cout << row[i] << " | ";
-                }
+                // for (int i = 0;  i < row.size() ; i ++) {
+                    // std::cout << row[i] << " | ";
+                // }
+
+                // int main() {
+                //     std::variant<int, std::string> v = "Hello std::visit";
+
+                //     std::visit(overloaded {
+                //         [](int i) { std::cout << "Integer: " << i << std::endl; },
+                //         [](const std::string& s) { std::cout << "String: " << s << std::endl; }
+                //     }, v);
+                // }
+                std::cout << static_cast<double>(row[10]) << '\n';
             }
             
 
