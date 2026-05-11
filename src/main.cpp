@@ -17,14 +17,11 @@ using double_str = std::variant<std::string , double>;
 
 struct DataContainer{
 
-    // store data in std::vector<std::vector<double>> 
-    // { {1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}, ... }
-
     DataContainer(const std::string& filename,int headerlength = 0){
         std::ifstream file(filename);
         std::string line;
         int colNumb {0};
-        std::vector<double_str> row;
+        // std::vector<double_str> row;
 
         // Check if the file is open
         if (!file.is_open()) {
@@ -49,7 +46,7 @@ struct DataContainer{
                         temp.push_back(value);
                     
                     if(temp.size() == headerlength){
-                        row.push_back(temp);
+                        dataValues.push_back(temp);
                         temp.clear();
                     }
                 }
@@ -57,19 +54,19 @@ struct DataContainer{
             }
         }
         // this is just to test if we are getting the data correctly ** remove this later
-        for(auto& field : row){
+        for(auto& field : dataValues){
             for(auto& fieldTwo : field){
                 std::visit([](auto&& arg){
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, std::string>) {
-                        std::cout << fieldTwo << '\n';
-                    } else if constexpr (std::is_same_v<T, double>) {
-                        std::cout << fieldTwo << '\n';
-                    }
+                    std::cout << arg << ' ';
                 }, fieldTwo);
             }
+            std::cout << '\n';
         }
         
+    }
+
+    double_str getData(int indexI , int IndexJ){
+        return this->dataValues[indexI][IndexJ];
     }
 
     void getInnerValues(){
@@ -89,7 +86,7 @@ struct DataContainer{
         >;
         headerFields headerFieldValues;
 
-        std::vector<std::vector<double>> dataValues;
+        std::vector<std::vector<double_str>> dataValues;
         // we store all the data values in this
 
         bool isNumber(const std::string& s) {
