@@ -45,7 +45,7 @@ struct DataCell{
         if(auto s = std::get_if<std::string>(&value)){
             return *s;
         }
-        if(auto d = std::get_if<double>(&value)){
+        if(auto d = std::get_if<double>(&value)){ 
             return std::to_string(*d);
         }
         return "";
