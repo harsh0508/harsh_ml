@@ -82,7 +82,6 @@ struct DataContainer{
         std::ifstream file(filename);
         std::string line;
         int colNumb {0};
-        // std::vector<double_str> row;
 
         // Check if the file is open
         if (!file.is_open()) {
@@ -93,7 +92,7 @@ struct DataContainer{
             std::stringstream ss(line);
             std::string value;
             
-            std::vector<double_str> temp; 
+            std::vector<DataCell> temp; 
             // Split the line by commas
             while (std::getline(ss, value, ',')) {
                 if(colNumb+1 < headerlength){
@@ -119,7 +118,7 @@ struct DataContainer{
         
     }
 
-    double_str getData(int indexI , int IndexJ){
+    DataCell getData(int indexI , int IndexJ){
         return this->dataValues[indexI][IndexJ];
     }
 
@@ -133,7 +132,7 @@ struct DataContainer{
         // store header values
         std::array<std::string,15> headerValues{"", "", "", "", "", "", "", "", "", "","","","","",""}; 
         // data storage below
-        std::vector<std::vector<double_str>> dataValues;
+        std::vector<std::vector<DataCell>> dataValues;
        
         // checks if data type is number i.e double or string
         bool isNumber(const std::string& s) {
@@ -183,10 +182,10 @@ struct LinerRegression:MlModel{
         double bias {0.0}; // bias term
         int shuffler {0}; // random seed shuffler
 
-        std::vector<double_str> dataValues; // data values for model
+        std::vector<DataCell> dataValues; // data values for model
         int headerLeangth {0}; // header length for data
 
-        std::vector<std::vector<double_str>> normalizedData ; // normalized data for model
+        std::vector<std::vector<DataCell>> normalizedData ; // normalized data for model
         std::vector<std::tuple<double , double>> minMaxValues; // to store min and max values for each feature
 
 
@@ -201,7 +200,7 @@ struct LinerRegression:MlModel{
             return isTrain == ((index * shuffler + seed ) % dataSize < percentage);
         }
 
-        std::vector<std::vector<double_str>> getNormalizedData(std::vector<std::vector<double_str>>& dataValues , int& headerLeangth){
+        std::vector<std::vector<DataCell>> getNormalizedData(std::vector<std::vector<DataCell>>& dataValues , int& headerLeangth){
             // normalize data using min-max normalization
         
             // get min max for each feature
@@ -210,13 +209,13 @@ struct LinerRegression:MlModel{
             int index = {0};
             for(int i = 0; i < headerLeangth; i++){
                 int j = {0};
-                min = dataValues[i][index];
-                max = dataValues[i][index];
+                min = dataValues[i][index].toDouble();
+                max = dataValues[i][index].toDouble();
                 while(j < dataValues.size()){
-                    if(dataValues[j][index] < min)
-                        min = dataValues[j][index];
-                    if(dataValues[j][index] > max)
-                        max = dataValues[j][index];
+                    if(dataValues[j][index].toDouble() < min)
+                        min = dataValues[j][index].toDouble();
+                    if(dataValues[j][index].toDouble() > max)
+                        max = dataValues[j][index].toDouble();
                     j++;
                 }
                 index++;
@@ -225,12 +224,12 @@ struct LinerRegression:MlModel{
 
             // normalize data using min max values
             for(auto& row : dataValues){
-                std::vector<double_str> temp={};
+                std::vector<DataCell> temp={};
                 int index = {0};
                 for(auto& column : row){
                     // normalize here **
                     // normalized_value = (value - min) / (max - min)
-                     double value = column;
+                     double value = column.toDouble();
                      temp.push_back((value - std::get<0>(minMaxValues[index])) / (std::get<1>(minMaxValues[index]) - std::get<0>(minMaxValues[index])));
                      index++;
                 }
@@ -243,7 +242,7 @@ struct LinerRegression:MlModel{
 
     public:
 
-        LinerRegression(std::vector<double_str> dataValues , int headerLeangth){
+        LinerRegression(std::vector<DataCell> dataValues , int headerLeangth){
             this->dataValues = dataValues;
             this->headerLeangth = headerLeangth;
             this->getInitialWeights(22);
