@@ -11,12 +11,7 @@
 
 
 
-// task : replace all the double_str with DataCell and make necessary changes to the code to work with DataCell instead of double_str
-
-struct csvData{};
-
-using double_str = std::variant<std::string , double>;
-
+// task : 
 
 struct DataCell{
 
@@ -65,19 +60,6 @@ struct DataCell{
 
 struct DataContainer{
 
-
-    void printData(std::vector<std::vector<double_str>> dataValues){
-        
-        for(auto& field : dataValues){
-            for(auto& fieldTwo : field){
-                std::visit([](auto&& arg){
-                    std::cout << arg << ' ';
-                }, fieldTwo);
-            }
-            std::cout << '\n';
-        }
-    }
-
     DataContainer(const std::string& filename,int headerlength = 0){
         std::ifstream file(filename);
         std::string line;
@@ -113,13 +95,11 @@ struct DataContainer{
                 
             }
         }
-        // add or remove to print data **
-        // printData(this->dataValues);
         
     }
 
-    DataCell getData(int indexI , int IndexJ){
-        return this->dataValues[indexI][IndexJ];
+    std::vector<std::vector<DataCell>> getData(){
+        return this->dataValues;
     }
 
     void getInnerValues(){
@@ -182,7 +162,7 @@ struct LinerRegression:MlModel{
         double bias {0.0}; // bias term
         int shuffler {0}; // random seed shuffler
 
-        std::vector<DataCell> dataValues; // data values for model
+        std::vector<std::vector<DataCell>> dataValues; // data values for model
         int headerLeangth {0}; // header length for data
 
         std::vector<std::vector<DataCell>> normalizedData ; // normalized data for model
@@ -200,7 +180,7 @@ struct LinerRegression:MlModel{
             return isTrain == ((index * shuffler + seed ) % dataSize < percentage);
         }
 
-        std::vector<std::vector<DataCell>> getNormalizedData(std::vector<std::vector<DataCell>>& dataValues , int& headerLeangth){
+        void normalizeData(){
             // normalize data using min-max normalization
         
             // get min max for each feature
@@ -237,15 +217,16 @@ struct LinerRegression:MlModel{
             }
 
             
-            return normalizedData;
+            return ;
         }
 
     public:
 
-        LinerRegression(std::vector<DataCell> dataValues , int headerLeangth){
+        LinerRegression(std::vector<std::vector<DataCell>> dataValues , int headerLeangth){
             this->dataValues = dataValues;
             this->headerLeangth = headerLeangth;
-            this->getInitialWeights(22);
+            normalizeData(); // normalize data before training
+            this->getInitialWeights(headerLeangth); //
             
             this->shuffler = 55 + this->dataValues.size(); // add 55 + data_size to the shuffler number
         }
@@ -274,6 +255,9 @@ struct LinerRegression:MlModel{
 
 int main() {
 
-    DataContainer dataContainer{"../data/regressionData/house.csv" , 8};
+    int HEADER_LENGTH = 8; // header length for data
+    DataContainer dataContainer{"../data/regressionData/house.csv" , HEADER_LENGTH};
+    LinerRegression linerModel(dataContainer.getData() , HEADER_LENGTH);
+
     return 0;
 }
