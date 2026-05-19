@@ -11,7 +11,7 @@
 
 
 
-// task : 
+// task : check how seed is working and implement it with shuffling data and splitting it into training and testing data
 
 struct DataCell{
 
@@ -157,10 +157,12 @@ struct LinerRegression:MlModel{
         // model parameters
 
         double alpha {0.01}; // learning rate
-        int epochs {1000}; // number of iteration / epochs
+        int epochs ; // number of iteration / epochs
         std::vector<double> weights; // weights for each feature
         double bias {0.0}; // bias term
         int shuffler {0}; // random seed shuffler
+        int trainingPercentage {0}; // percentage of data used for training
+        int seed {0}; // random seed for shuffling data
 
         std::vector<std::vector<DataCell>> dataValues; // data values for model
         int headerLeangth {0}; // header length for data
@@ -175,9 +177,9 @@ struct LinerRegression:MlModel{
                 this->weights.push_back(0.0);
             }
         }
-        bool checkRandomSeed(int& index , int& seed , int& dataSize , int& percentage , bool isTrain = true){
+        bool checkRandomSeed(int& index , int& seed ,const int& dataSize ,const int& percentage , bool isTrain = true){
                 // we use random seed formula to shuffle data and get random samples for training and testing
-            return isTrain == ((index * shuffler + seed ) % dataSize < percentage);
+            return isTrain == ((index * shuffler + seed ) % dataSize < dataSize * percentage / 100); // if isTrain is true, we get training data, else we get testing data
         }
 
         void normalizeData(){
@@ -189,8 +191,8 @@ struct LinerRegression:MlModel{
             int index = {0};
             for(int i = 0; i < headerLeangth; i++){
                 int j = {0};
-                min = dataValues[i][index].toDouble();
-                max = dataValues[i][index].toDouble();
+                min = dataValues[0][index].toDouble();
+                max = dataValues[0][index].toDouble();
                 while(j < dataValues.size()){
                     if(dataValues[j][index].toDouble() < min)
                         min = dataValues[j][index].toDouble();
@@ -220,31 +222,67 @@ struct LinerRegression:MlModel{
             return ;
         }
 
+        void rescaleData(){
+
+        }
+
     public:
 
         LinerRegression(std::vector<std::vector<DataCell>> dataValues , int headerLeangth){
             this->dataValues = dataValues;
             this->headerLeangth = headerLeangth;
             normalizeData(); // normalize data before training
-            this->getInitialWeights(headerLeangth); //
+            this->getInitialWeights(headerLeangth-1); //
             
             this->shuffler = 55 + this->dataValues.size(); // add 55 + data_size to the shuffler number
         }
 
-        void Fit(){
+        void Fit(int epochs = 100 , bool earlyStopping = false , int percentage = 80 , int seed = 0){
+            // ** implenet random seed
+            // **implement early stopping later
             // train model
             // y = w1*x1 + w2*x2 + ... + wn*xn + b
+            this->trainingPercentage = percentage;
+            this->seed = seed;
+            double recordedError {}; // to record error for early stopping
 
-            
-
+            for(int e = 0; e < epochs; e++){
+                int rowIndex = {0};
+                for(auto &row : normalizedData){
+                    if(checkRandomSeed(rowIndex , seed , normalizedData.size() , percentage)){ // specified percentage for training
+                        double y_pred = bias; // initialize predicted value with bias
+                        for(int i = 0; i < headerLeangth-1; i++){
+                            y_pred += weights[i] * row[i].toDouble(); // calculate predicted value : y_pred = w1*x1 + w2*x2 + ... + wn*xn + b
+                        }
+                        double error = row[headerLeangth-1].toDouble() - y_pred; // calculate error : error = y_true - y_pred
+                        // std::cout << "Epoch: " << e+1 << " Error: " << error << '\n'; // print error for each epoch
+                        bias += alpha * error; // update bias
+                        for(int i = 0; i < headerLeangth-1; i++){
+                            weights[i] += alpha * error * row[i].toDouble(); // update weights
+                        }
+                    }
+                    rowIndex++;
+                }
+                // if(e % 100 == 0){
+                    // ** implement MSE for early stopping
+                    // std::cout << "Epoch: " << e+1  << ",Mean Squared Error: " <<   << '\n';
+                // }
+            }
         }
 
         void Predict(){
             // predict model
-        }
-
-         void predictError(){
-            // MSE or something 
+            int rowIndex = {0};
+            for(const auto& row : normalizedData){
+                if(checkRandomSeed(rowIndex, seed , normalizedData.size() , trainingPercentage , false)){ // specified percentage for testing
+                    double y_pred = bias; // initialize predicted value with bias
+                    for(int i = 0; i < headerLeangth-1; i++){
+                        y_pred += weights[i] * row[i].toDouble(); // calculate predicted value : y_pred = w1*x1 + w2*x2 + ... + wn*xn + b
+                    }
+                    std::cout << "Predicted Value: " << y_pred <<" ,Original: " << row[headerLeangth-1].toDouble() <<", Error: " << row[headerLeangth-1].toDouble() - y_pred << '\n'; // print predicted value
+                }
+                rowIndex++;
+            }
         }
         ~LinerRegression(){
             // destructor
@@ -258,6 +296,9 @@ int main() {
     int HEADER_LENGTH = 8; // header length for data
     DataContainer dataContainer{"../data/regressionData/house.csv" , HEADER_LENGTH};
     LinerRegression linerModel(dataContainer.getData() , HEADER_LENGTH);
+    linerModel.Fit(5000, false, 80, 42); // train model
+
+    linerModel.Predict(); // predict model
 
     return 0;
 }
